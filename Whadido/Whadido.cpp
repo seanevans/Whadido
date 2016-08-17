@@ -5,11 +5,44 @@
 #include "Windows.h"
 //#include "Windowsx.h"
 #include <stdio.h> 
+#include <string>
 
 #define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
 
+using namespace std;
+
+int _imageNumber = 0;
+
 int CaptureAnImage(POINT pt)
+{
+	HBITMAP hbmScreen = NULL;
+	//Get the window that we clicked in
+	HWND hWnd = WindowFromPoint(pt);
+	HDC hdcWindow = GetDC(hWnd);
+
+	//create an area around the point that we want to capture
+	// Create a compatible bitmap from the Window DC
+	hbmScreen = CreateCompatibleBitmap(hdcWindow, 200, 200);
+	if (!BitBlt(hdcMemDC,
+		0, 0,
+		rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
+		hdcWindow,
+		0, 0,
+		SRCCOPY))
+	{
+		MessageBox(hWnd, L"BitBlt has failed", L"Failed", MB_OK);
+		goto done;
+	}
+
+	//capture the image
+
+	//write the image to disk
+
+}
+
+
+int CaptureAnImageWindow(POINT pt)
 {
 	HWND hWnd = WindowFromPoint(pt);
 	HDC hdcScreen;
@@ -17,6 +50,11 @@ int CaptureAnImage(POINT pt)
 	HDC hdcMemDC = NULL;
 	HBITMAP hbmScreen = NULL;
 	BITMAP bmpScreen;
+
+	string numberString = to_string(++_imageNumber);
+	string s = "captureqwsx_" + numberString + ".bmp";
+	std::wstring stemp = std::wstring(s.begin(), s.end());
+	LPCWSTR sw = stemp.c_str();
 
 	// Retrieve the handle to a display device context for the client 
 	// area of the window. 
@@ -110,8 +148,10 @@ int CaptureAnImage(POINT pt)
 		lpbitmap,
 		(BITMAPINFO *)&bi, DIB_RGB_COLORS);
 
+	
+
 	// A file is created, this is where we will save the screen capture.
-	HANDLE hFile = CreateFile(L"captureqwsx.bmp",
+	HANDLE hFile = CreateFile(sw,
 		GENERIC_WRITE,
 		0,
 		NULL,
@@ -161,7 +201,7 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 		{
 			POINT pt = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam)->pt;
 			printf("left mouse up[%d][%d]\n", pt.x, pt.y);
-			CaptureAnImage(pt);
+			CaptureAnImageWindow(pt);
 
 		}
 		if (wParam == WM_MBUTTONDOWN) printf("middle mouse down [%d][%d]\n", reinterpret_cast<MSLLHOOKSTRUCT*>(lParam)->pt.x, reinterpret_cast<MSLLHOOKSTRUCT*>(lParam)->pt.y);
